@@ -1,0 +1,61 @@
+@startuml fig05
+' 圖 5：表演性的獨立
+' 論點：宣稱的「兩位獨立審查者」在原始碼層級是同一支程式、同一段提示詞、
+'        同一個模型跑兩遍，只有輸出欄位不同。其 kappa 量的是同一模型的取樣雜訊，
+'        不是兩個獨立判斷者之間的一致度。
+' 資料來源：meta-pipe/ai_screen.py:122, :259-288
+' 產生方式：plantuml fig05-performative-independence.puml
+
+skinparam backgroundColor white
+skinparam defaultFontName "PingFang TC"
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam participant {
+  BorderColor #7a6aa8
+  BackgroundColor #e8e2f5
+}
+skinparam actor {
+  BorderColor #6a86a8
+  BackgroundColor #e5edf7
+}
+
+title 稿件宣稱「兩位審查者獨立篩選」——底下實際發生的事
+
+actor "稿件讀者" as reader
+
+box "同一支程式 ai_screen.py" #f7f7f7
+  participant "screener-a" as a
+  participant "screener-b" as b
+end box
+
+participant "同一個語言模型\n同一段提示詞" as model #f7dede
+
+== 稿件裡讀者以為的樣子 ==
+reader -> a : 委任第一位獨立審查者
+reader -> b : 委任第二位獨立審查者
+note over reader : 讀者假設 a 與 b\n是兩個獨立判斷來源
+
+== 原始碼層級實際發生的事 ==
+a -> model : 送出同一批摘要（第一遍）
+model --> a : 取樣輸出 #1
+b -> model : 送出同一批摘要（第二遍）
+model --> b : 取樣輸出 #2
+
+note over a, b #fdf3f3
+  a 與 b 呼叫的是同一模型、同一提示詞，
+  只有輸出欄位名稱不同（ai_screen.py:259-288）
+end note
+
+a -> reader : 回報判斷
+b -> reader : 回報判斷
+reader -> reader : 計算 kappa 一致度
+
+note over reader #fffbe8
+  這個 kappa 量的是「同一個模型跑兩遍之間的取樣雜訊」，
+  不是「兩個獨立判斷者之間的一致度」。
+  數字看起來像品質保證，其實是自己跟自己比。
+end note
+
+@enduml

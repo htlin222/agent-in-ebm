@@ -1,0 +1,63 @@
+// 圖 2：cherry-picking 住在哪道縫裡
+// 論點：IMRaD 的 Methods 是事後寫的敘事，不是事前的指令。
+//       實際流程裡的每一個分岔決策，在敘事化的過程中被抹平成一句「我們做了 X」。
+// 產生方式：dot -Tpdf fig02-imrad-gap.dot -o fig02-imrad-gap.pdf
+
+digraph imrad_gap {
+  rankdir=TB;
+  bgcolor="white";
+  fontname="PingFang TC";
+  node [fontname="PingFang TC", fontsize=11, shape=box, style="rounded,filled", color="#4a4a4a", penwidth=0.8];
+  edge [fontname="PingFang TC", fontsize=9, color="#6a6a6a", penwidth=0.9];
+  graph [fontname="PingFang TC", fontsize=12, nodesep=0.4, ranksep=0.6];
+
+  // 上排：實際發生的研究過程（充滿未記錄的分岔）
+  subgraph cluster_actual {
+    label="實際發生的過程（每一步都是一次選擇）";
+    labeljust=l;
+    fontsize=12;
+    color="#8fa8bf";
+    style="rounded";
+    bgcolor="#f2f6f8";
+
+    a1 [label="檢索式\n改了 4 次", fillcolor="#dce6ee"];
+    a2 [label="納入準則\n中途放寬年限", fillcolor="#dce6ee"];
+    a3 [label="兩人不一致\n私下討論後改判", fillcolor="#dce6ee"];
+    a4 [label="子群組\n分析後才定義", fillcolor="#dce6ee"];
+    a5 [label="固定 vs 隨機效應\n看了結果才選", fillcolor="#dce6ee"];
+    a1 -> a2 -> a3 -> a4 -> a5 [style=dashed, color="#8fa8bf"];
+  }
+
+  // 抹平的動作
+  flatten [label="事後敘事化\n（撰寫 Methods）",
+           shape=box, style="rounded,filled",
+           fillcolor="#f0e8d8", color="#b89a5a", penwidth=1.2];
+
+  // 下排：Methods 段落裡最後長成的樣子（分岔全部消失）
+  subgraph cluster_methods {
+    label="Methods 段落最後寫成的樣子（分岔全部消失）";
+    labeljust=l;
+    fontsize=12;
+    color="#9a9a9a";
+    style="rounded";
+    bgcolor="#f7f7f7";
+
+    m1 [label="「依預先擬定之\n檢索策略檢索」", fillcolor="#ececec"];
+    m2 [label="「依納入準則\n篩選文獻」", fillcolor="#ececec"];
+    m3 [label="「兩位審查者\n獨立評估」", fillcolor="#ececec"];
+    m4 [label="「進行預先計畫之\n子群組分析」", fillcolor="#ececec"];
+    m5 [label="「採隨機效應\n模型合併」", fillcolor="#ececec"];
+    m1 -> m2 -> m3 -> m4 -> m5 [style=invis];
+  }
+
+  a3 -> flatten [color="#b89a5a"];
+  flatten -> m3 [color="#b89a5a"];
+
+  // 縫隙標註
+  seam [label="cherry-picking 就住在這道縫裡\n體例本身不含任何真偽檢查",
+        shape=note, fillcolor="#fdf3f3", color="#c98a8a", fontsize=11, fontcolor="#8a4a4a"];
+
+  flatten -> seam [style=dotted, color="#c98a8a", penwidth=1.4, constraint=false];
+
+  {rank=same; flatten; seam;}
+}

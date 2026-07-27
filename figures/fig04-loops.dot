@@ -1,0 +1,53 @@
+// 圖 4：四種迴圈，按終止條件是否外生於模型分類
+// 論點：迴圈的可信度取決於終止條件是否外生於模型。
+//       內生終止的迴圈會停，但停在自我滿意的地方。
+// 產生方式：dot -Tpdf fig04-loops.dot -o fig04-loops.pdf
+
+digraph loops {
+  rankdir=TB;
+  bgcolor="white";
+  fontname="PingFang TC";
+  node [fontname="PingFang TC", fontsize=11, shape=box, style="rounded,filled", penwidth=0.9];
+  edge [fontname="PingFang TC", fontsize=9, penwidth=0.9];
+  graph [fontname="PingFang TC", fontsize=12, nodesep=0.5, ranksep=0.7];
+
+  // 內生終止（模型自己判斷該不該停）——不可信
+  subgraph cluster_endo {
+    label="終止條件內生於模型　→　會停在自我滿意的地方";
+    labeljust=l;
+    fontsize=13;
+    color="#c98a8a";
+    style="rounded";
+    bgcolor="#fdf3f3";
+
+    audit [label="稽核迴圈\n終止＝規範全數通過\n失效＝應試作答",
+           fillcolor="#f7dede", color="#a85a5a"];
+    review [label="審查迴圈\n終止＝reviewer 一致接受\n失效＝self-preference bias",
+            fillcolor="#f7dede", color="#a85a5a"];
+  }
+
+  // 外生終止（停止由模型外的事實決定）——可信但仍有失效模式
+  subgraph cluster_exo {
+    label="終止條件外生於模型　→　停在模型管不到的地方";
+    labeljust=l;
+    fontsize=13;
+    color="#8fbf8f";
+    style="rounded";
+    bgcolor="#f2f8f2";
+
+    fail [label="失敗迴圈\n終止＝計算完成 / 協定修訂\n失效＝修訂可能是掩飾",
+          fillcolor="#dcebdc", color="#5a8a5a"];
+    monitor [label="監測迴圈\n終止＝無（持續）\n失效＝type I error 膨脹",
+             fillcolor="#dcebdc", color="#5a8a5a"];
+  }
+
+  // 判準節點
+  crit [label="判準：終止條件是否外生於模型？",
+        shape=box, style="rounded,filled", fillcolor="#e8e2f5",
+        color="#7a6aa8", penwidth=1.3, fontsize=12];
+
+  crit -> audit [label="  內生  ", fontcolor="#a85a5a", color="#a85a5a"];
+  crit -> review [label="  內生  ", fontcolor="#a85a5a", color="#a85a5a"];
+  crit -> fail [label="  外生  ", fontcolor="#5a8a5a", color="#5a8a5a"];
+  crit -> monitor [label="  外生  ", fontcolor="#5a8a5a", color="#5a8a5a"];
+}

@@ -1,0 +1,68 @@
+// 圖 1：一段沒有發生過的研究方法是怎麼產生的
+// 資料來源：htlin222/robust-lit-review, section_dispatcher.py / output/sections/02-methods.qmd
+// 產生方式：dot -Tpdf fig01-fabrication.dot -o fig01-fabrication.pdf
+
+digraph fabrication {
+  rankdir=LR;
+  compound=true;
+  bgcolor="white";
+  fontname="PingFang TC";
+  node [fontname="PingFang TC", fontsize=11, shape=box, style="rounded,filled", color="#4a4a4a", penwidth=0.8];
+  edge [fontname="PingFang TC", fontsize=9, color="#6a6a6a", penwidth=0.9];
+  graph [fontname="PingFang TC", fontsize=12, nodesep=0.35, ranksep=0.75];
+
+  subgraph cluster_real {
+    label="流程真正知道的事";
+    labeljust=l;
+    fontsize=12;
+    color="#8fbf8f";
+    style="rounded";
+    bgcolor="#f2f8f2";
+
+    r1 [label="檢索命中\n897 筆", fillcolor="#dcebdc"];
+    r2 [label="去重後\n783 筆", fillcolor="#dcebdc"];
+    r3 [label="選入\n50 筆", fillcolor="#dcebdc"];
+    r1 -> r2 -> r3;
+  }
+
+  agent [label="寫作代理\n（語言模型）", shape=box, style="rounded,filled",
+         fillcolor="#e8e2f5", color="#7a6aa8", penwidth=1.2];
+
+  subgraph cluster_fake {
+    label="產出稿件裡寫的事";
+    labeljust=l;
+    fontsize=12;
+    color="#c98a8a";
+    style="rounded";
+    bgcolor="#fdf3f3";
+
+    f1 [label="「兩位審查者\n獨立篩選」", fillcolor="#f7dede"];
+    f2 [label="「事前擬定的\n研究協定」", fillcolor="#f7dede"];
+    f3 [label="「171 篇全文\n評估合格性」", fillcolor="#f7dede"];
+    f4 [label="流程圖數字\n612 / 171 / 121\n＋六類排除理由", fillcolor="#f7dede"];
+  }
+
+  truth [label="流程的真實狀態\n\n・沒有第二位審查者\n・沒有事前註冊的協定\n・只讀摘要，不解析全文",
+         shape=note, fillcolor="#fffbe8", color="#b8a05a", fontsize=10];
+
+  audit [label="品質稽核\n（關鍵詞比對）", shape=box, style="rounded,filled",
+         fillcolor="#e5edf7", color="#6a86a8", penwidth=1.2];
+  score [label="35 / 36 通過", shape=box, style="rounded,filled",
+         fillcolor="#e5edf7", color="#6a86a8", fontsize=12];
+
+  r3 -> agent [label="  只交付這三個數字  ", fontsize=10];
+  agent -> f1 [style=dashed, color="#a8788a"];
+  agent -> f2 [style=dashed, color="#a8788a"];
+  agent -> f3 [style=dashed, color="#a8788a"];
+  agent -> f4 [style=dashed, color="#a8788a", label="  其餘全部自行補寫  ", fontsize=10];
+
+  f1 -> audit [color="#8a9ab8"];
+  f4 -> audit [color="#8a9ab8"];
+  audit -> score;
+
+  truth -> f2 [lhead=cluster_fake, style=dotted, color="#b8a05a", penwidth=1.4,
+               label="  以上四項\n  皆與此矛盾  ", fontsize=10, fontcolor="#8a7030",
+               constraint=false];
+
+  {rank=same; agent; truth;}
+}
