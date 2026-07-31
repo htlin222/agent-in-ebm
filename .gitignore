@@ -10,3 +10,6 @@ __pycache__/
 # 暫存
 *.tmp
 scratchpad/
+
+# 機密（HackMD token 等），永不提交
+.env
