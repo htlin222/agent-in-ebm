@@ -1,8 +1,8 @@
 @startuml fig05
-' 圖 5：表演性的獨立
+' 圖 5：重複執行不等於獨立審查
 ' 論點：宣稱的「兩位獨立審查者」在原始碼層級是同一支程式、同一段提示詞、
-'        同一個模型跑兩遍，只有輸出欄位不同。其 kappa 量的是同一模型的取樣雜訊，
-'        不是兩個獨立判斷者之間的一致度。
+'        同一個模型跑兩遍，只有輸出欄位不同。kappa 可以描述兩次輸出的一致程度，
+'        不能證明判斷彼此獨立，也不能證明答案正確。
 ' 資料來源：meta-pipe/ai_screen.py:122, :259-288
 ' 產生方式：plantuml fig05-performative-independence.puml
 
@@ -21,7 +21,7 @@ skinparam actor {
   BackgroundColor #e5edf7
 }
 
-title 稿件宣稱「兩位審查者獨立篩選」——底下實際發生的事
+title 方法段的「兩位獨立審查者」與程式實際執行
 
 actor "稿件讀者" as reader
 
@@ -53,9 +53,9 @@ b -> reader : 回報判斷
 reader -> reader : 計算 kappa 一致度
 
 note over reader #fffbe8
-  這個 kappa 量的是「同一個模型跑兩遍之間的取樣雜訊」，
-  不是「兩個獨立判斷者之間的一致度」。
-  數字看起來像品質保證，其實是自己跟自己比。
+  kappa 描述兩次輸出的一致程度，
+  不能證明兩次判斷彼此獨立，
+  也不能證明兩次判斷都正確。
 end note
 
 @enduml

@@ -1,7 +1,6 @@
-// 圖 4：四種迴圈，按終止條件是否外生於模型分類
-// 論點：迴圈的可信度取決於終止條件是否外生於模型。
-//       內生終止的迴圈會停，但停在自我滿意的地方。
-// 產生方式：dot -Tpdf fig04-loops.dot -o fig04-loops.pdf
+// 圖 4：判斷迴圈何時可以停止
+// 論點：要分開檢查「誰判定本輪結束」與「停止規則能否中途改」。
+// 產生方式：dot -Tpng fig04-loops.dot -o fig04-loops.png
 
 digraph loops {
   rankdir=TB;
@@ -9,45 +8,55 @@ digraph loops {
   fontname="PingFang TC";
   node [fontname="PingFang TC", fontsize=11, shape=box, style="rounded,filled", penwidth=0.9];
   edge [fontname="PingFang TC", fontsize=9, penwidth=0.9];
-  graph [fontname="PingFang TC", fontsize=12, nodesep=0.5, ranksep=0.7];
+  graph [fontname="PingFang TC", fontsize=12, nodesep=0.35, ranksep=0.55];
 
-  // 內生終止（模型自己判斷該不該停）——不可信
-  subgraph cluster_endo {
-    label="終止條件內生於模型　→　會停在自我滿意的地方";
+  question [label="判斷迴圈何時可以停止？要回答兩個問題",
+            fillcolor="#e8e2f5", color="#7a6aa8", penwidth=1.3, fontsize=13];
+
+  subgraph cluster_judge {
+    label="軸一：誰／什麼判定本輪結束？";
     labeljust=l;
     fontsize=13;
-    color="#c98a8a";
+    color="#7fa6c9";
     style="rounded";
-    bgcolor="#fdf3f3";
+    bgcolor="#f2f7fb";
 
-    audit [label="稽核迴圈\n終止＝規範全數通過\n失效＝應試作答",
-           fillcolor="#f7dede", color="#a85a5a"];
-    review [label="審查迴圈\n終止＝reviewer 一致接受\n失效＝self-preference bias",
-            fillcolor="#f7dede", color="#a85a5a"];
+    self [label="生成器本身／同家族模型\n風險：產出與驗收不獨立",
+          fillcolor="#f7dede", color="#a85a5a"];
+    test [label="事前指定的獨立程式／測試\n風險：只檢查表面合規",
+          fillcolor="#dce9f5", color="#5a7fa8"];
+    human [label="人類審查者\n風險：仍可能共享偏誤",
+           fillcolor="#dce9f5", color="#5a7fa8"];
+    event [label="計算完成／外部事件\n風險：底層協定仍可能錯",
+           fillcolor="#dce9f5", color="#5a7fa8"];
   }
 
-  // 外生終止（停止由模型外的事實決定）——可信但仍有失效模式
-  subgraph cluster_exo {
-    label="終止條件外生於模型　→　停在模型管不到的地方";
+  subgraph cluster_rule {
+    label="軸二：停止規則在執行期間能不能改？";
     labeljust=l;
     fontsize=13;
     color="#8fbf8f";
     style="rounded";
     bgcolor="#f2f8f2";
 
-    fail [label="失敗迴圈\n終止＝計算完成 / 協定修訂\n失效＝修訂可能是掩飾",
-          fillcolor="#dcebdc", color="#5a8a5a"];
-    monitor [label="監測迴圈\n終止＝無（持續）\n失效＝type I error 膨脹",
+    fixed [label="事前固定\n保存規則版本與實際停止原因",
+           fillcolor="#dcebdc", color="#5a8a5a"];
+    mutable [label="執行中可改\n風險：門檻配合產出漂移",
+             fillcolor="#f7e6cc", color="#b07a32"];
+    ongoing [label="無終點（持續監測）\n需預先規定更新與統計校正",
              fillcolor="#dcebdc", color="#5a8a5a"];
   }
 
-  // 判準節點
-  crit [label="判準：終止條件是否外生於模型？",
-        shape=box, style="rounded,filled", fillcolor="#e8e2f5",
-        color="#7a6aa8", penwidth=1.3, fontsize=12];
+  synthesis [label="不能只用「內生／外生」分類\n須同時檢查判定者是否獨立，以及規則是否固定",
+             fillcolor="#fff4cc", color="#b08a2e", penwidth=1.2, fontsize=12];
 
-  crit -> audit [label="  內生  ", fontcolor="#a85a5a", color="#a85a5a"];
-  crit -> review [label="  內生  ", fontcolor="#a85a5a", color="#a85a5a"];
-  crit -> fail [label="  外生  ", fontcolor="#5a8a5a", color="#5a8a5a"];
-  crit -> monitor [label="  外生  ", fontcolor="#5a8a5a", color="#5a8a5a"];
+  question -> self [color="#7fa6c9"];
+  question -> fixed [color="#8fbf8f"];
+  self -> synthesis [color="#a85a5a"];
+  test -> synthesis [color="#5a7fa8"];
+  human -> synthesis [color="#5a7fa8"];
+  event -> synthesis [color="#5a7fa8"];
+  fixed -> synthesis [color="#5a8a5a"];
+  mutable -> synthesis [color="#b07a32"];
+  ongoing -> synthesis [color="#5a8a5a"];
 }
