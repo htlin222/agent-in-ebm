@@ -1,0 +1,4 @@
+interface:
+  display_name: "HackMD Sync"
+  short_description: "Pull, edit, and verify HackMD notes"
+  default_prompt: "Use the HackMD sync workflow: pull the cloud note before editing, normalize image links, then push and verify the remote content exactly."

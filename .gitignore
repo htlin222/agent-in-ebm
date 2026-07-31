@@ -13,3 +13,5 @@ scratchpad/
 
 # 機密（HackMD token 等），永不提交
 .env
+/skills/hackmd-sync/.env
+*.cloud.md
