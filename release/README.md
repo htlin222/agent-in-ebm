@@ -32,7 +32,7 @@ tag 已存在時 build 會直接失敗。要重發同一個 commit，用 workflo
 - 版本、日期、`SOURCE_DATE_EPOCH` 全部由 commit 推導，不看 build 當下的時間。
 - 圖檔 mtime 與 zip（`-X`）都釘在 `SOURCE_DATE_EPOCH`。
 - pandoc 版本寫死在 workflow 的 `PANDOC_VERSION`。`.deb` 的 sha256 每次都會印出來並寫進
-  release notes；把它填進 `PANDOC_SHA256` 就會改成強制驗證，不符即失敗。
+  release notes；雜湊已釘在 `PANDOC_SHA256`，不符就擋下來；換 pandoc 版本時要一起更新。
 - 引用只從 `refs.json` 登記的 DOI 取，不從正文解析、不由模型生成。DOI 查詢結果按
   `refs.json` 的雜湊快取。
 - PDF 在同一個 commit 下應可重現；`.docx` 是 zip 容器，位元層級一致不保證，

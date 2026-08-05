@@ -25,8 +25,8 @@ concurrency:
 env:
   MANUSCRIPT: docs/manuscript/chapter-full.md
   PANDOC_VERSION: "3.5"
-  # 想把 pandoc 鎖死到位元層級，就把第一次建置印出的雜湊填進來；留空只記錄不驗證。
-  PANDOC_SHA256: ""
+  # 取自 run 31030573642 的實測值。改 PANDOC_VERSION 時要一起換掉，否則會擋下來。
+  PANDOC_SHA256: "4f41d817d262ef3d17953a3e6e0fefddb971aa4f2f121544a9a86db449d945e1"
 
 jobs:
   release:
