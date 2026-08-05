@@ -11,6 +11,10 @@ __pycache__/
 *.tmp
 scratchpad/
 
+# 建置產物（由 .github/workflows/release-chapter.yml 產生，不進版控）
+dist/
+.cache/
+
 # 機密（HackMD token 等），永不提交
 .env
 /skills/hackmd-sync/.env

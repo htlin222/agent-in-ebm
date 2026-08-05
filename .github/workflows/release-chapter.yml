@@ -1,0 +1,243 @@
+name: release-chapter
+
+# 正文一被推上 main 就發一版。tag = chapter-<日期>-<短 hash>，由 commit 決定，
+# 不需要維護版本檔，同一天推多次也不會撞。
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/manuscript/chapter-full.md
+  workflow_dispatch:
+    inputs:
+      force:
+        description: tag 已存在時仍重建並覆蓋該 release
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# 兩次推送不會同時發版，避免搶 tag。
+concurrency:
+  group: release-chapter
+  cancel-in-progress: false
+
+env:
+  MANUSCRIPT: docs/manuscript/chapter-full.md
+  PANDOC_VERSION: "3.5"
+  # 想把 pandoc 鎖死到位元層級，就把第一次建置印出的雜湊填進來；留空只記錄不驗證。
+  PANDOC_SHA256: ""
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 需要完整歷史才能找到前一版並算出改了哪幾節
+
+      - name: 決定版本
+        id: version
+        run: |
+          set -euo pipefail
+          commit="$(git rev-parse HEAD)"
+          epoch="$(git log -1 --format=%ct "$commit")"
+          date="$(TZ=UTC date -u -d "@$epoch" +%Y-%m-%d)"
+          tag="chapter-$(TZ=UTC date -u -d "@$epoch" +%Y.%m.%d)-$(git rev-parse --short=7 HEAD)"
+
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            if [ "${{ inputs.force }}" = "true" ]; then
+              echo "::warning::$tag 已存在，依 force 輸入覆蓋"
+            else
+              echo "::error::$tag 已存在。要重建請用 workflow_dispatch 並勾選 force。"
+              exit 1
+            fi
+          fi
+
+          # 上一版：排除本次 tag，取最新的 chapter-* tag
+          previous="$(git tag --list 'chapter-*' --sort=-creatordate | grep -vFx "$tag" | head -1 || true)"
+
+          {
+            echo "commit=$commit"
+            echo "epoch=$epoch"
+            echo "date=$date"
+            echo "tag=$tag"
+            echo "previous=$previous"
+          } >> "$GITHUB_OUTPUT"
+          echo "tag=$tag  date=$date  previous=${previous:-（無）}"
+
+      - name: 安裝 pandoc 與 XeLaTeX
+        run: |
+          set -euo pipefail
+          deb="pandoc-${PANDOC_VERSION}-1-amd64.deb"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+            -o "/tmp/$deb" \
+            "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/${deb}"
+
+          actual="$(sha256sum "/tmp/$deb" | cut -d' ' -f1)"
+          echo "pandoc deb sha256: $actual"
+          if [ -n "${PANDOC_SHA256}" ] && [ "$actual" != "${PANDOC_SHA256}" ]; then
+            echo "::error::pandoc 雜湊不符：預期 ${PANDOC_SHA256}，實際 $actual"
+            exit 1
+          fi
+
+          sudo dpkg -i "/tmp/$deb"
+          sudo apt-get update -qq
+          # texlive-lang-chinese 帶 xeCJK；fonts-noto-cjk 提供繁中字型
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            texlive-xetex texlive-latex-recommended texlive-fonts-recommended \
+            texlive-lang-chinese fonts-noto-cjk fonts-noto-cjk-extra \
+            poppler-utils
+          fc-cache -f
+
+          for font in "Noto Serif CJK TC" "Noto Sans CJK TC" "Noto Sans Mono CJK TC"; do
+            fc-list | grep -qF "$font" || { echo "::error::缺字型：$font"; exit 1; }
+          done
+
+          mkdir -p dist/_build
+          jq -n \
+            --arg pandoc "$(pandoc --version | head -1)" \
+            --arg xelatex "$(xelatex --version | head -1)" \
+            --arg deb_sha "$actual" \
+            --arg runner "${{ runner.os }} ubuntu-24.04" \
+            '{pandoc: $pandoc, xelatex: $xelatex, "pandoc deb sha256": $deb_sha, runner: $runner}' \
+            > dist/_build/toolchain.json
+
+      - name: 快取 DOI 查詢結果
+        uses: actions/cache@v4
+        with:
+          path: .cache/crossref
+          key: doi-${{ hashFiles('release/refs.json') }}
+          restore-keys: doi-
+
+      - name: 檢查正文
+        run: python3 release/build.py check --report dist/_build/check.json
+
+      - name: 準備 pandoc 來源
+        run: |
+          python3 release/build.py prepare \
+            --outdir dist/_build \
+            --tag "${{ steps.version.outputs.tag }}" \
+            --date "${{ steps.version.outputs.date }}"
+
+      - name: 匯出圖檔
+        run: |
+          python3 release/build.py figures \
+            --outdir dist/figures \
+            --epoch "${{ steps.version.outputs.epoch }}"
+
+      - name: 產生 bib
+        run: |
+          python3 release/build.py bib \
+            --outdir dist \
+            --cache .cache/crossref \
+            --tag "${{ steps.version.outputs.tag }}" \
+            --date "${{ steps.version.outputs.date }}" \
+            --commit "${{ steps.version.outputs.commit }}"
+
+      - name: 建置 PDF 與 DOCX
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.version.outputs.epoch }}
+          FORCE_SOURCE_DATE: "1"
+        run: |
+          set -euo pipefail
+          cp "$MANUSCRIPT" dist/chapter-full.md
+
+          common=(
+            dist/_build/chapter.pandoc.md
+            --metadata-file=dist/_build/metadata.yaml
+            --from=markdown+footnotes+pipe_tables+tex_math_dollars
+            --resource-path=".:$(pwd):$(pwd)/docs/manuscript"
+            --standalone
+            --toc --toc-depth=2
+          )
+
+          # PDF 不帶 lang，避免 pandoc 掛上 polyglossia；中文排版交給 xeCJK。
+          pandoc "${common[@]}" \
+            --pdf-engine=xelatex \
+            --top-level-division=section \
+            -o dist/chapter-full.pdf
+
+          # DOCX 帶 lang，Word 的校對語言才會是繁中。
+          pandoc "${common[@]}" \
+            --metadata=lang:zh-TW \
+            -o dist/chapter-full.docx
+
+      - name: 驗證產物
+        run: |
+          set -euo pipefail
+          fail=0
+          for file in dist/chapter-full.md dist/chapter-full.pdf dist/chapter-full.docx \
+                      dist/citation.bib dist/references.bib dist/figures/FIGURES.md; do
+            if [ ! -s "$file" ]; then echo "::error::產物缺失或為空：$file"; fail=1; fi
+          done
+
+          # PDF 要真的有頁；pdfinfo 由上一步的 poppler-utils 提供
+          pages="$(pdfinfo dist/chapter-full.pdf | awk '/^Pages:/ {print $2}')"
+          echo "PDF 頁數：$pages"
+          [ "${pages:-0}" -ge 5 ] || { echo "::error::PDF 只有 ${pages:-0} 頁，八成沒排版成功"; fail=1; }
+
+          # DOCX 必須是合法 zip 且含 document.xml
+          unzip -l dist/chapter-full.docx | grep -q 'word/document.xml' \
+            || { echo "::error::DOCX 結構不對"; fail=1; }
+
+          # 圖檔數量要對得上正文
+          expected="$(grep -cE '^!\[圖[0-9]+\]' "$MANUSCRIPT")"
+          actual="$(python3 -c "import json;print(len(json.load(open('dist/figures/figures.json'))))")"
+          echo "正文圖數 $expected／匯出 $actual"
+          [ "$expected" = "$actual" ] || { echo "::error::圖數對不上"; fail=1; }
+
+          exit $fail
+
+      - name: 打包圖檔並計算雜湊
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.version.outputs.epoch }}
+        run: |
+          set -euo pipefail
+          # -X 去掉額外時間戳記，讓同一 commit 產生相同的 zip
+          (cd dist && zip -X -r -q figures.zip figures)
+          (cd dist && find . -type f ! -name checksums.txt ! -path './_*' -print0 \
+            | sort -z | xargs -0 sha256sum > checksums.txt)
+          cat dist/checksums.txt
+
+      - name: 產生 release 內文
+        run: |
+          python3 release/build.py notes \
+            --outdir dist \
+            --commit "${{ steps.version.outputs.commit }}" \
+            --epoch "${{ steps.version.outputs.epoch }}" \
+            --previous-tag "${{ steps.version.outputs.previous }}" \
+            --report dist/_build/check.json \
+            --toolchain dist/_build/toolchain.json
+          cat dist/release-notes.md
+
+      - name: 發布
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" \
+            --target "${{ steps.version.outputs.commit }}" \
+            --title "$TAG" \
+            --notes-file dist/release-notes.md \
+            dist/chapter-full.md \
+            dist/chapter-full.pdf \
+            dist/chapter-full.docx \
+            dist/citation.bib \
+            dist/references.bib \
+            dist/figures.zip \
+            dist/figures/* \
+            dist/checksums.txt
+          echo "已發布 ${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG"
+
+      - name: 保留建置產物（失敗時也留）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chapter-build-${{ github.sha }}
+          path: dist/
+          retention-days: 14

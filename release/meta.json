@@ -1,0 +1,23 @@
+{
+  "_comment": "發布用的固定 metadata。標題不放這裡——標題唯一真相來源是正文的 H1。",
+  "manuscript": "docs/manuscript/chapter-full.md",
+  "repo": "htlin222/agent-in-ebm",
+  "repo_url": "https://github.com/htlin222/agent-in-ebm",
+  "hackmd_url": "https://hackmd.io/8cqZK3E6Sqy7U92Pl2aIpg",
+  "authors": ["Hsiehting Lin"],
+  "author_bibtex": "Lin, Hsiehting",
+  "citekey": "lin_agent_in_ebm",
+  "lang": "zh-TW",
+  "license": "CC-BY-4.0",
+  "pdf": {
+    "mainfont": "Noto Serif",
+    "sansfont": "Noto Sans",
+    "monofont": "Noto Sans Mono",
+    "CJKmainfont": "Noto Serif CJK TC",
+    "CJKsansfont": "Noto Sans CJK TC",
+    "CJKmonofont": "Noto Sans Mono CJK TC",
+    "fontsize": "11pt",
+    "geometry": "margin=2.5cm",
+    "linestretch": "1.35"
+  }
+}

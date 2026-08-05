@@ -1,0 +1,57 @@
+{
+  "_comment": [
+    "引用真相來源。references.bib 只由這個檔產生，不從正文解析、不由模型生成。",
+    "有 doi 的：build 時向 https://doi.org 做 content negotiation 取官方 BibTeX（Crossref／DataCite 都走這條）。",
+    "沒有 doi 的：literal 欄位就是最終輸出，逐字寫死。",
+    "正文增刪任何一個註腳，check 會因為 key 對不上而讓 build 失敗——這是刻意的。"
+  ],
+  "refs": {
+    "1": {
+      "citekey": "htlin_robust_lit_review",
+      "literal": "@misc{htlin_robust_lit_review,\n  author       = {Lin, Hsiehting},\n  title        = {robust-lit-review: an auditable automated literature review prototype},\n  howpublished = {GitHub repository},\n  url          = {https://github.com/htlin222/robust-lit-review},\n  note         = {開場案例的程式碼、輸入與自我稽核紀錄}\n}"
+    },
+    "2": { "citekey": "higgins2019cochrane", "doi": "10.1002/9781119536604" },
+    "3": { "citekey": "hu2021inconsistencies", "doi": "10.1002/jrsm.1476" },
+    "4": { "citekey": "siebert2023magnitude", "doi": "10.7717/peerj.16016" },
+    "5": { "citekey": "wang2020errorrates", "doi": "10.1371/journal.pone.0227742" },
+    "6": { "citekey": "gotzsche2007extraction", "doi": "10.1001/jama.298.4.430" },
+    "7": {
+      "citekey": "sollaci2004imrad",
+      "literal": "@article{sollaci2004imrad,\n  author  = {Sollaci, Luciana B. and Pereira, Mauricio G.},\n  title   = {The introduction, methods, results, and discussion (IMRAD) structure: a fifty-year survey},\n  journal = {Journal of the Medical Library Association},\n  year    = {2004},\n  volume  = {92},\n  number  = {3},\n  pages   = {364--367},\n  note    = {No DOI assigned; PMID: 15243643}\n}"
+    },
+    "8": { "citekey": "page2021prisma", "doi": "10.1136/bmj.n71" },
+    "9": { "citekey": "simmons2011falsepositive", "doi": "10.1177/0956797611417632" },
+    "10": { "citekey": "gelman2014forkingpaths", "doi": "10.1511/2014.111.460" },
+    "11": { "citekey": "salvadorolivan2019search", "doi": "10.5195/jmla.2019.567" },
+    "12": { "citekey": "waffenschmidt2019single", "doi": "10.1186/s12874-019-0782-0" },
+    "13": { "citekey": "gartlehner2020single", "doi": "10.1016/j.jclinepi.2020.01.005" },
+    "14": { "citekey": "guyatt2011grade", "doi": "10.1016/j.jclinepi.2010.04.026" },
+    "15": { "citekey": "mustafa2013grade", "doi": "10.1016/j.jclinepi.2013.02.004" },
+    "16": { "citekey": "rombey2020registration", "doi": "10.1016/j.jclinepi.2019.09.026" },
+    "17": { "citekey": "peng2011reproducible", "doi": "10.1126/science.1213847" },
+    "18": { "citekey": "elliott2014living", "doi": "10.1371/journal.pmed.1001603" },
+    "19": { "citekey": "flemyng2025aistatement", "doi": "10.1002/14651858.ED000178" },
+    "20": { "citekey": "thomas2017machinelearning", "doi": "10.1016/j.jclinepi.2017.08.011" },
+    "21": { "citekey": "omaraeves2015textmining", "doi": "10.1186/2046-4053-4-5" },
+    "22": {
+      "citekey": "w3c2013provdm",
+      "literal": "@techreport{w3c2013provdm,\n  author      = {{World Wide Web Consortium}},\n  title       = {{PROV-DM}: The {PROV} Data Model},\n  institution = {W3C},\n  type        = {W3C Recommendation},\n  year        = {2013},\n  url         = {https://www.w3.org/TR/prov-dm/}\n}"
+    },
+    "23": { "citekey": "panickssery2024selfpreference", "doi": "10.48550/arXiv.2404.13076" },
+    "24": { "citekey": "zheng2023mtbench", "doi": "10.48550/arXiv.2306.05685" },
+    "25": { "citekey": "simmonds2017living", "doi": "10.1016/j.jclinepi.2017.08.008" },
+    "26": {
+      "citekey": "peng2011reproducible",
+      "doi": "10.1126/science.1213847",
+      "duplicate_of": "17"
+    },
+    "27": { "citekey": "oami2025ensemble", "doi": "10.1017/rsm.2025.10014" },
+    "28": { "citekey": "khraisha2024screening", "doi": "10.1002/jrsm.1715" },
+    "29": { "citekey": "konet2024extraction", "doi": "10.1002/jrsm.1732" },
+    "30": { "citekey": "arno2022rct", "doi": "10.7326/M22-0092" },
+    "31": { "citekey": "greenhalgh2014crisis", "doi": "10.1136/bmj.g3725" },
+    "32": { "citekey": "wilkinson2025inspectsr", "doi": "10.1016/j.jclinepi.2025.111824" },
+    "33": { "citekey": "siontis2013overlapping", "doi": "10.1136/bmj.f4501" },
+    "34": { "citekey": "lunny2022replication", "doi": "10.1186/s12874-022-01750-2" }
+  }
+}
