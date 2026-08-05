@@ -96,8 +96,12 @@ jobs:
             poppler-utils
           fc-cache -f
 
+          # 用 fc-match 而不是 grep：grep "Noto Serif" 會被 "Noto Serif CJK TC" 誤中，
+          # fc-match 回傳的是實際會被解析到的字族，字型沒裝就會 fallback 成別的。
           for font in "Noto Serif CJK TC" "Noto Sans CJK TC" "Noto Sans Mono CJK TC"; do
-            fc-list | grep -qF "$font" || { echo "::error::缺字型：$font"; exit 1; }
+            resolved="$(fc-match -f '%{family[0]}' "$font")"
+            [ "$resolved" = "$font" ] || {
+              echo "::error::字型 $font 沒裝，fc-match 解析成 $resolved"; exit 1; }
           done
 
           mkdir -p dist/_build
@@ -116,7 +120,7 @@ jobs:
           set -euo pipefail
           printf '# 冒煙測試\n\n中文字、Latin text、`程式碼`、κ=0.02、〔圖 1〕、→ 箭頭。\n' > /tmp/smoke.md
           pandoc /tmp/smoke.md --pdf-engine=xelatex --standalone \
-            -V mainfont="Noto Serif" -V monofont="Noto Sans Mono" \
+            -V mainfont="Noto Serif CJK TC" -V monofont="Noto Sans Mono CJK TC" \
             -V CJKmainfont="Noto Serif CJK TC" -V CJKmonofont="Noto Sans Mono CJK TC" \
             -o /tmp/smoke.pdf
           pdfinfo /tmp/smoke.pdf | head -3
