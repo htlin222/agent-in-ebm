@@ -85,9 +85,13 @@ jobs:
 
           sudo dpkg -i "/tmp/$deb"
           sudo apt-get update -qq
-          # texlive-lang-chinese 帶 xeCJK；fonts-noto-cjk 提供繁中字型
+          # lmodern：pandoc 的 LaTeX 模板無條件 \usepackage{lmodern}，
+          #   而 --no-install-recommends 不會把它帶進來
+          # texlive-latex-extra：unicode-math、selnolig、footnotehyper 等模板相依
+          # texlive-lang-chinese：xeCJK；fonts-noto-cjk：繁中字型
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            texlive-xetex texlive-latex-recommended texlive-fonts-recommended \
+            texlive-xetex texlive-latex-recommended texlive-latex-extra \
+            texlive-fonts-recommended lmodern \
             texlive-lang-chinese fonts-noto-cjk fonts-noto-cjk-extra \
             poppler-utils
           fc-cache -f
@@ -104,6 +108,21 @@ jobs:
             --arg runner "${{ runner.os }} ubuntu-24.04" \
             '{pandoc: $pandoc, xelatex: $xelatex, "pandoc deb sha256": $deb_sha, runner: $runner}' \
             > dist/_build/toolchain.json
+
+      # 用最小文件把整條 XeLaTeX + xeCJK + Noto CJK 的路徑先走一遍。
+      # 工具鏈缺東西就在這裡爆，錯誤訊息乾淨，不必到正文第 400 行才發現。
+      - name: 冒煙測試 PDF 工具鏈
+        run: |
+          set -euo pipefail
+          printf '# 冒煙測試\n\n中文字、Latin text、`程式碼`、κ=0.02、〔圖 1〕、→ 箭頭。\n' > /tmp/smoke.md
+          pandoc /tmp/smoke.md --pdf-engine=xelatex --standalone \
+            -V mainfont="Noto Serif" -V monofont="Noto Sans Mono" \
+            -V CJKmainfont="Noto Serif CJK TC" -V CJKmonofont="Noto Sans Mono CJK TC" \
+            -o /tmp/smoke.pdf
+          pdfinfo /tmp/smoke.pdf | head -3
+          pdftotext /tmp/smoke.pdf - | grep -q '冒煙測試' \
+            || { echo "::error::PDF 產出了，但中文字沒有真的排進去"; exit 1; }
+          echo "PDF 工具鏈可用"
 
       - name: 快取 DOI 查詢結果
         uses: actions/cache@v4
